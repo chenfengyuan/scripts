@@ -1,0 +1,42 @@
+#!/usr/bin/perl -w
+#eexpress
+#chenfengyuan modify
+#remove Net::DBus
+use utf8;
+use strict;
+use WWW::Mechanize;
+#use Net::DBus;
+use 5.010;
+
+$_=$ARGV[0];
+#s/^http:\/([a-z])/http:\/\/$1/;
+chomp; s/\//%2F/g; s/:/%3A/g;
+$_="http://www.flvcd.com/parse.php?flag=&format=&kw=$_&sbt=%BF%AA%CA%BCGO%21";
+chdir "$ENV{HOME}/movie";
+#my $bus = Net::DBus->session->get_service('org.freedesktop.Notifications')->get_object('/org/freedesktop/Notifications','org.freedesktop.Notifications');
+my $mech = WWW::Mechanize->new();
+$mech -> get($_);
+if ($mech->success()) {
+#        print $mech->title()."==================\n";
+   $_=$mech->content();
+   /当前解析视频.*/; $_=$&; s/^.*?strong>//; s/<strong.*//;
+   print $_."==================\n";
+   mkdir $_; chdir   $_;
+   my @link=$mech->find_all_links(text_regex => qr/http:\/\/.*[0-9a-fA-F]*/,);
+   my $size=@link;
+   #$bus->Notify("fetch_flash", 0, "sunny", "共获取 $size 个地址。", $size, [], { }, -1);
+   say "fetch_flash:共获取 $size 个地址";
+#        print map "=> ".$_->url()."\n",@_;
+   my $filename='000';
+   foreach(@link){
+      my $add=$_->url();
+      print @_,"下载 => $add\n";
+      `wget -nc --user-agent='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.3) Gecko/2008092416 Firefox/3.0.3' $add -O $filename`;
+      ++$filename;
+   }
+   chdir '..';
+} else {
+   #$bus->Notify("fetch_flash", 0, "error", '解析失败，无效地址？', ':(', [], { }, -1);
+   say STDERR "解析失败，无效地址？:(";
+}
+#======================

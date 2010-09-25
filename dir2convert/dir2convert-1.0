@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+#chenfengyuan
+#licensing:http://dev.perl.org/licenses/
+use warnings;
+use strict;
+use 5.010;
+
+sub dir2convert{
+    my $current_dir=shift;
+    chdir $current_dir;
+    for(glob "*"){
+	next if ( $_ eq '.' || $_ eq '..');
+	&dir2convert($_) if -d $_;
+    }
+    unlink 'foo.avi';
+    my @files=grep{-f $_ && $_ ne "link.log"} glob "*";
+    say "now is processing $current_dir";
+    system("mencoder @files -ovc copy -oac mp3lame -o foo.avi &> /dev/null  ") if @files;
+    #say "@files";
+    $? && exit;
+    chdir "..";
+}
+my @dirs=@ARGV?@ARGV:".";
+for my $root_dir (@dirs){
+    &dir2convert($root_dir);
+}
+
