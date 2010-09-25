@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+use warnings;
+use Getopt::Long;
+use 5.012;
+use Pod::Usage;
+use LWP;
+use Encode;
+use utf8;
+
+use constant UA => 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60';
+my $ua=LWP::UserAgent->new(agent=>UA);
+
+sub get_content{
+    my $url=shift;
+    my $response=$ua->get($url);
+    if ($response->is_success) {
+	return $response->decoded_content;
+    }
+    else{
+	warn "get_content error:".$response->status_line;
+	return undef;
+    }
+}
+
+GetOptions(
+	   'file|f=s' => \ my $file,
+	   'show|s' => \ my $show,
+	   'help|h' => \ my $help,
+	  );
+if(defined $help|| (! defined $file && (scalar @ARGV == 0) ) ) {
+    pod2usage(1);
+}
+my @files=split /,/,$file;
+my @web_urls;
+if(scalar @ARGV > 0){
+    @web_urls=@ARGV;
+    @ARGV=();
+}
+if(@files){
+    unshift @ARGV,@files;
+    push @web_urls,<>;
+}
+
+#get to download urls
+#open URL,'<','url';
+#close URL;
+for my $web_url (@web_urls) {
+    chomp($web_url);
+    #get real download urls
+    my $web_content=get_content($web_url);
+    my ($file_name,$file_url);
+    for (split /\n/,$web_content) {
+	chomp;
+	/^var file_name = '(.+)';/ && ($file_name = $1);
+	m{http://(?:\d+?\.)?bak\.[^"]+} && ($file_url=$&);
+	last if ($file_name && $file_url);
+    }
+    unless($file_name && $file_url){
+	say "file_url:$file_url";
+	say "file_name:$file_name";
+    	say $web_url;
+    	exit 1;
+    }
+    #download files
+    unless(defined $show){
+	system("wget -c --user-agent='".UA."' '$file_url' -O '$file_name'");
+	exit $? if $?;
+	sleep 1;
+    }
+    else{
+	say encode 'utf-8',"$file_name:\t\t$file_url";
+    }
+}
+
+__END__
+
+=head1 NAME
+
+115_down - A simple 115.com file downloader  written by cfy (cfy1990 at gmail dot com)
+
+=head1 SYNOPSIS
+
+115_down [-f|--file  file] [-s] [-h|--help] [url]
+
+=head1 OPTIONS
+
+specify the IRC server (default: irc.freenode.net)
+
+=item B<-f, --file>
+specify the files to read urls.Multiple files can be given,separated by commas.use '-' to read from stdin.
+
+=item B<-s, --show>
+show the download urls instead download them
+
+
+=item B<--help>
+print help
+
+=cut
