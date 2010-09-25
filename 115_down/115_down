@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+#written by chenfengyuan
+#cfy1990 at gmail dot com
 
 use warnings;
 use Getopt::Long;
