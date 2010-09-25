@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use 5.010;
+
+my $user_agent='Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60';
+
+#get to download urls
+#open URL,'<','url';
+my @web_urls=<>;
+#close URL;
+
+
+for my $web_url (@web_urls) {
+    #get real download urls
+    my $web_content=`curl -A '$user_agent' '$web_url' 2> /dev/null `;
+    my ($file_name,$file_url);
+    for (split /\n/,$web_content) {
+	chomp;
+	/var file_name = '(.+\.(?:ape|flac))';/ && ($file_name = $1);
+	m{http://(?:\d+?\.)?bak\.[^"]+} && ($file_url=$&);
+	last if ($file_name && $file_url);
+    }
+    unless($file_name && $file_url){
+	say "file_url:$file_url";
+	say "file_name:$file_name";
+    	say $web_url;
+    	exit 1;
+    }
+    #download files
+    system("wget -c --user-agent='$user_agent' '$file_url' -O '$file_name'");
+    exit $? if $?;
+    sleep 1;
+}

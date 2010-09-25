@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use 5.010;
+
+
+my $user_agent='Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60';
+
+#get to download urls
+#open URL,'<','url';
+my $urls_file=$ARGV[1]//$ARGV[0];
+my @web_urls=<>;
+#close URL;
+my @fail_download=@web_urls;;
+$SIG{'INT'}=\&my_exit;
+
+my ($i,$n)=(0,scalar @web_urls);
+for my $web_url (@web_urls) {
+    chomp($web_url);
+    #get real download urls
+    my $web_content=`curl -A '$user_agent' '$web_url' 2> /dev/null `;
+    my ($file_name,$file_url);
+    for (split /\n/,$web_content) {
+	chomp;
+	/var file_name = '(.+\.(?:ape|flac))';/ && ($file_name = $1);
+	m{http://(?:\d+?\.)?bak\.[^"]+} && ($file_url=$&);
+	last if ($file_name && $file_url);
+    }
+    say ++$i.'/'.$n.':'.$web_url;
+    unless($file_name && $file_url){
+	say "error on parsing web";
+	say "file_url:".($file_url//'undefined');
+	say "file_name:".($file_name//'undefined');
+    	say $web_url;
+	sleep 3;
+	push @fail_download,$web_url."\n";
+	push @web_urls,$web_url."\n";
+	shift @fail_download;
+	next;
+    }
+    #download files
+    system("wget -c --user-agent='$user_agent' '$file_url' -O '$file_name'");
+    given(my $exit_status=$?){
+	when(2){
+	    &my_exit();
+	}
+	when(0){
+	    if(-s $file_name < 10_000){
+		unlink $file_name;
+		push @fail_download,$web_url."\n";
+	    }
+	    shift @fail_download;
+	}
+    }
+    sleep 3;
+}
+
+sub my_exit{
+    open OUT,'>',$urls_file;
+    print OUT for @fail_download;
+    close OUT;
+    exit 2;
+}
+
+&my_exit;
