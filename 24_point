@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+#Copyright (c) 2010 Fengyuan Chen. All rights reserved. This program is
+#free software; you can redistribute it and/or modify it under the same
+#terms as Perl itself.
+use strict;
+use warnings;
+use 5.010;
+use Getopt::Long;
+GetOptions(
+	   'help|h' => \ my $help,
+	  );
+
+if($help){
+    say 'Copyright (c) 2010 Fengyuan Chen. All rights reserved. This program is
+free software; you can redistribute it and/or modify it under the same
+terms as Perl itself.
+use none digit or negative sign to separete a group,and use whitespace between groups
+example:
+perl '.$0.' 3,3,8,8 6:6:6:6';
+}
+
+sub c_d{
+    my ($c,%d)=@_;
+    return map { (
+		  "($c*$_)",$c*$d{$_},
+		  "($c+$_)",$c+$d{$_},
+		  $c>$d{$_}?
+		  ("($c-$_)",$c-$d{$_}):
+		  ("($_-$c)",$d{$_}-$c),
+		  "($c/$_)",($d{$_}?$c/$d{$_}:()),
+		  "($_/$c)",($c?$d{$_}/$c:()),
+		 )}keys %d;
+}
+sub f24{
+    my $c=shift;
+    if (@_==1) {
+	my $d=shift;
+	return &c_d($c,($d=>$d));
+    } else {
+	return &c_d($c,&f24(@_));
+    }
+}
+sub p{
+    my @r;
+    if (@_<=2) {
+	return ([$_[0],$_[1]],[$_[1],$_[0]]);
+    }
+    for my $c ((0..$#_)) {
+	push @r,map {push @$_,$_[$c];$_} &p(@_[(($c+1..$#_),(0..$c-1))]);
+    }
+    return @r;
+}
+
+#main
+for my $i (0..$#ARGV) {
+    my %n;
+    say '' if $i >0;
+    $_=$ARGV[$i];
+    for (&p(split '[^\d-]')) {
+	$n{join " ",@$_}=undef;
+    }
+    for (keys %n) {
+	my %r=&f24(split);
+	while ( my  ($c,$d)= (each %r)) {
+	    say "$c=$d" if abs($d - 24)<0.1;
+	}
+    }
+}
+
