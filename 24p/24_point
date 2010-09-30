@@ -16,10 +16,12 @@ free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 use none digit or negative sign to separete a group,and use whitespace between groups
 example:
-perl '.$0.' 3,3,8,8 6:6:6:6';
+perl '.$0.' 3,3,8,8 6:6:6:6
+perl '.$0.'6/6/6/6';
 }
-
+my $t;
 sub c_d{
+    $t++;
     my ($c,%d)=@_;
     return map { (
 		  "($c*$_)",$c*$d{$_},
@@ -62,8 +64,9 @@ for my $i (0..$#ARGV) {
     for (keys %n) {
 	my %r=&f24(split);
 	while ( my  ($c,$d)= (each %r)) {
-	    say "$c=$d" if abs($d - 24)<0.1;
+	    say "$c" if abs($d - 24)<0.1;
 	}
     }
+	#say $t;
 }
 

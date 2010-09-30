@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+use Stroable;
+
+my $data=retrieve 'data';
+my %f;
+#build formular number
+for my $num (keys %$data){
+    for (@$num){
+	$f{$_}{$num}=undef;
+	$f{$_}{num}++;
+    }
+}
+
+#find necessary formula
+my @nec_f;
+while(keys %f){
+    my $key,$max;
+    for(keys %f){
+	if($f{$_}{num}>max){
+	    $key=$_;
+	    $max=$f{$_}{num};
+	}
+    }
+
