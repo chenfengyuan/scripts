@@ -87,7 +87,6 @@ __END__
 
 =head1 OPTIONS
 
-specify the IRC server (default: irc.freenode.net)
 
 =item B<-f, --file>
 specify the files to read urls.Multiple files can be given,separated by commas.use '-' to read from stdin.

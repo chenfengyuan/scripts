@@ -3,26 +3,43 @@
 use strict;
 use warnings;
 use 5.010;
-use Stroable;
+use Storable;
 
 my $data=retrieve 'data';
 my %f;
 #build formular number
 for my $num (keys %$data){
-    for (@$num){
-	$f{$_}{$num}=undef;
-	$f{$_}{num}++;
+    for (keys %{$$data{$num}}){
+	$f{$_}{numbers}{$num}=undef;
+	$f{$_}{total}++;
     }
 }
+
 
 #find necessary formula
 my @nec_f;
 while(keys %f){
-    my $key,$max;
+    my ($key,$max)=(undef,0);
     for(keys %f){
-	if($f{$_}{num}>max){
+	if($f{$_}{total}>$max){
 	    $key=$_;
-	    $max=$f{$_}{num};
+	    $max=$f{$_}{total};
 	}
     }
+    my @num=keys %{$f{$key}{numbers}};
+    push @nec_f,$key;
+    delete $f{$key};
+    for my $cur (keys %f){
+	for(keys %{$f{$cur}{numbers}}){
+	    if($_ ~~ @num){
+		delete $f{$cur}{numbers}{$_};
+	    }
+	    unless(keys %{$f{$cur}{numbers}}){
+		delete $f{$cur};
+	    }
+	}
+    }
+}
+print @nec_f;
+
 

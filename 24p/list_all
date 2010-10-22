@@ -8,11 +8,11 @@ for my $c(1..13){
     for my $d($c..13){
 	for my $e($d..13){
 	    for my $f($e..13){
-		printf "%.2f%%\t%s\n",++$i/1820*100,"$c.$d.$e.$f"; 
+		printf "%.2f%% ",++$i/1820*100;
 		open my $r24,"perl 24_point $c.$d.$e.$f |";
 		while(<$r24>){
 		    s/\d+/x/g;
-		    push @${$num{"$c.$d.$e.$f"}},$_ unless /^$/;
+		    ${$num{"$c.$d.$e.$f"}}{$_}=undef unless /^$/;
 		}
 	    }
 	}
