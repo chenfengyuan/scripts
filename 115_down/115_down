@@ -4,7 +4,7 @@
 
 use warnings;
 use Getopt::Long;
-use 5.012;
+use 5.010;
 use Pod::Usage;
 use WWW::Mechanize;
 use Encode;
