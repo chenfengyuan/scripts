@@ -2,6 +2,7 @@
 #written by chenfengyuan
 #cfy1990 at gmail dot com
 
+use strict;
 use warnings;
 use Getopt::Long;
 use 5.010;
