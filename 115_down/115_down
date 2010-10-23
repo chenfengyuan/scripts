@@ -4,7 +4,7 @@
 
 use warnings;
 use Getopt::Long;
-use 5.012;
+use 5.010;
 use Pod::Usage;
 use LWP;
 use Encode;
@@ -33,15 +33,19 @@ GetOptions(
 if(defined $help|| (! defined $file && (scalar @ARGV == 0) ) ) {
     pod2usage(1);
 }
-my @files=split /,/,$file;
 my @web_urls;
 if(scalar @ARGV > 0){
     @web_urls=@ARGV;
     @ARGV=();
 }
-if(@files){
+if(defined $file){
+    my @files=split /,/,$file;
     unshift @ARGV,@files;
     push @web_urls,<>;
+}
+
+unless(@web_urls){
+    pod2usage(1);
 }
 
 #get to download urls
@@ -52,15 +56,22 @@ for my $web_url (@web_urls) {
     #get real download urls
     my $web_content=get_content($web_url);
     my ($file_name,$file_url);
-    for (split /\n/,$web_content) {
-	chomp;
-	/^var file_name = '(.+)';/ && ($file_name = $1);
-	m{http://(?:\d+?\.)?bak\.[^"]+} && ($file_url=$&);
-	last if ($file_name && $file_url);
+    given($web_content){
+	when(/(\Q网络繁忙时段，非登陆用户其它下载地址暂时关闭。\E)/){
+	    say encode 'utf-8',$1;
+	    next;
+	}
+	when(/(\Q提取码不存在或已过期。\E)/||/(\Q很抱歉，文件不存在。\E)/){
+	    say encode 'utf-8',$1;
+	    next;
+	}
     }
+    
+    $web_content=~/^var file_name = '(.+)';/m && ($file_name = $1);
+    $web_content=~m{(http://(?:\d+?\.)?bak\.[^"]+)} && ($file_url=$1);
     unless($file_name && $file_url){
-	say "file_url:$file_url";
-	say "file_name:$file_name";
+	say "file_url:".($file_url//"none");
+	say encode 'utf-8',"file_name:".($file_name//"none");
     	say $web_url;
     	exit 1;
     }
@@ -71,7 +82,7 @@ for my $web_url (@web_urls) {
 	sleep 1;
     }
     else{
-	say encode 'utf-8',"$file_name:\t\t$file_url";
+	say encode 'utf-8',"$file_name\:\:\:$file_url";
     }
 }
 
