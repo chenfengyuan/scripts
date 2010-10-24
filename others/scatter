@@ -11,17 +11,24 @@ chdir $base;
 my @files=glob "*";
 open my $index,'>','index';
 sub scatter{
+    my $pre=shift;
+    if($pre eq ''){
+	$pre='a';
+    }
+    else{
+	++$pre;
+    }
     my $dir=shift;
     my @f=@_;
     my $i='00';
     while(@f>10){
-	mkdir $dir.$i;
-	scatter($dir.$i.'/',splice @f,0,10**int(log(@f-1)/log(10)));
+	mkdir $dir.$pre.$i;
+	scatter($pre,$dir.$pre.$i.'/',splice @f,0,10**int(log(@f-1)/log(10)));
 	$i++;
     }
     if(@f>0){
 	if($i>0){
-	    mkdir $dir.=$i.'/';
+	    mkdir $dir.=$pre.$i.'/';
 	}
 	for(@f){
 	    move($_,$dir);
@@ -29,4 +36,4 @@ sub scatter{
 	}
     }
 }
-&scatter('./',@files);
+&scatter('','./',@files);
