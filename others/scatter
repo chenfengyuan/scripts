@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+#This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+#written by Fengyuan Chen.
+use 5.012;
+use warnings;
+use File::Copy;
+
+my $base=shift;
+$base=~s{(?<=[^/])$}{/};
+chdir $base;
+my @files=glob "*";
+open my $index,'>','index';
+sub scatter{
+    my $dir=shift;
+    my @f=@_;
+    my $i='00';
+    while(@f>10){
+	mkdir $dir.$i;
+	scatter($dir.$i.'/',splice @f,0,10**int(log(@f-1)/log(10)));
+	$i++;
+    }
+    if(@f>0){
+	if($i>0){
+	    mkdir $dir.=$i.'/';
+	}
+	for(@f){
+	    move($_,$dir);
+	    say $index map {s{./}{};$_} "$_:$dir";
+	}
+    }
+}
+&scatter('./',@files);
