@@ -9,6 +9,7 @@ use warnings;
 use WWW::Mechanize;
 use Encode;
 use Mail::Sender;
+use utf8;
 my $sender = new Mail::Sender({
 			       smtp => '127.0.0.1',
 			       from => 'weather@gmail.com',
@@ -21,6 +22,10 @@ while(<>){
     say join " ",my ($to,$url)=split;
     $mech->get($url);
     my $msg=$mech->text();
+    $msg=~s/首页.*$//;
+    $msg=~s/.+?天气预报//;
+    $msg=~s/\r//g;
+    $msg=~s/(?=\d+月)/\n/g;
     $sender->MailMsg(
 		     {
 		      'encoding' => "Quoted-printable",
