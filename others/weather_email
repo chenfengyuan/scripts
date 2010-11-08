@@ -2,6 +2,8 @@
 #This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 #written by Fengyuan Chen.
 #jeova.sanctus.unus@gmail.com
+#usage:weather_email [zone] data-file
+#email_address url in data-file
 use 5.012;
 use warnings;
 use WWW::Mechanize;
@@ -12,6 +14,7 @@ my $sender = new Mail::Sender({
 			       from => 'weather@gmail.com',
 			      });
 my $mech=new WWW::Mechanize agent=> 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.63';
+my $zone=@ARGV>1?shift:0;
 
 while(<>){
     next if /^#/;
@@ -23,7 +26,7 @@ while(<>){
 		      'encoding' => "Quoted-printable",
 		      charset=>'utf-8',
 		      to => $to,
-		      subject => 'weather:'.gmtime,
+		      subject => 'weather:'.gmtime(time+$zone*3600),
 		      msg => encode('utf-8',$msg),
 		      # debug=>'w.log',
 		     });
