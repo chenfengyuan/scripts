@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+#This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+#written by Fengyuan Chen.
+#jeova.sanctus.unus@gmail.com
+use 5.012;
+use warnings;
+use WWW::Mechanize;
+use Encode;
+use Mail::Sender;
+my $sender = new Mail::Sender({
+			       smtp => '127.0.0.1',
+			       from => 'weather@gmail.com',
+			      });
+my $mech=new WWW::Mechanize agent=> 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.63';
+
+while(<>){
+    next if /^#/;
+    say join " ",my ($to,$url)=split;
+    $mech->get($url);
+    my $msg=$mech->text();
+    $sender->MailMsg(
+		     {
+		      'encoding' => "Quoted-printable",
+		      charset=>'utf-8',
+		      to => $to,
+		      subject => 'weather:'.gmtime,
+		      msg => encode('utf-8',$msg),
+		      # debug=>'w.log',
+		     });
+}
