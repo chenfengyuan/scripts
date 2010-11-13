@@ -16,23 +16,32 @@ my $sender = new Mail::Sender({
 			      });
 my $mech=new WWW::Mechanize agent=> 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.63';
 my $zone=@ARGV>1?shift:0;
+say 'reading file....';
+my %urls;
 
 while(<>){
     next if /^#/;
     say join " ",my ($to,$url)=split;
-    $mech->get($url);
-    my $msg=$mech->text();
+    unless(exists $urls{$url}){
+	say "getting $url";
+	$mech->get($url);
+	$urls{$url}=$mech->text();
+    }
+    my $msg=$urls{$url};
     $msg=~s/首页.*$//;
     $msg=~s/.+?天气预报//;
     $msg=~s/\r//g;
     $msg=~s/(?=\d+月)/\n/g;
+    my ($wea)=$msg=~/日\s+(\S+)\s+[-\d]/;
+    say $wea;
     $sender->MailMsg(
 		     {
 		      'encoding' => "Quoted-printable",
 		      charset=>'utf-8',
 		      to => $to,
-		      subject => 'weather:'.gmtime(time+$zone*3600),
-		      msg => encode('utf-8',$msg),
+		      subject => (encode 'utf-8',$wea),
+		      msg => encode('utf-8',$msg).gmtime(time+$zone*3600),
 		      # debug=>'w.log',
 		     });
+    say 'sent';
 }
