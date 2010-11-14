@@ -6,38 +6,28 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use 5.010;
 use Pod::Usage;
-use WWW::Mechanize;
+use LWP::UserAgent;
 use Encode;
 use utf8;
 
 use constant UA => 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60';
-use constant VERSION => 1.1;
+use constant VERSION => 1.0;
 
-my $mech=WWW::Mechanize->new(agent=>UA);
-
-sub login{
-    my $username=shift;
-    my $passwd=shift;
-    my $mech=shift;
-    $mech->get('http://u.115.com');
-    $mech->submit_form(
-		       with_fields=>{
-				     'login[account]'=>$username,
-				     'login[passwd]'=>$passwd,
-				     }
-		      );
+my $ua=new LWP::UserAgent agent=> UA;
+sub say{
+    print @_,"\n";
 }
+
 sub get_content{
-    my $mech=shift;
+    my $ua=shift;
     my $url=shift;
-    $mech->get($url);
-    if ($mech->success) {
-	return $mech->content;
+    my $response = $ua->get('http://iperl.co.cc/115.pl?'.$url);
+    if ($response->is_success) {
+	return $response->decoded_content;
     }
     else{
-	warn "get_content error:".$mech->status;
+	warn "get_content error:".$response->status_line;
 	return undef;
     }
 }
@@ -46,7 +36,6 @@ GetOptions(
 	   'file|f=s' => \ my $file,
 	   'show|s' => \ my $show,
 	   'help|h' => \ my $help,
-	   'login|l=s'=>\ my $login,
 	   'version|V'=>\ my $version,
 	  );
 if(defined $version){
@@ -74,47 +63,26 @@ if(defined $file){
 unless(@web_urls){
     pod2usage(1);
 }
-if(defined $login){
-    if($login eq ''){
-	&login('115_down','fn4=IplVhkmwtqvjh7dy',$mech);
-    }
-    else{
-	&login((split /,/,$login),$mech);
-    }
-}
+
 #get to download urls
 #open URL,'<','url';
 #close URL;
 for my $web_url (@web_urls) {
     chomp($web_url);
     #get real download urls
-    my $web_content=get_content($mech,$web_url);
-    my ($file_name,$file_url);
-    given($web_content){
-	when(m{\Qerror_message">\E([^<]+)\Q</span>\E}){
-	    say encode 'utf-8',$1;
-	    next;
-	}
- 	default{
-	    $web_content=~/^var file_name = '(.+)';/m && ($file_name = $1);
-	    $web_content=~m{(http://(?:\d+?\.)?bak\.[^"]+)} && ($file_url=$1);
-	    unless($file_name && $file_url){
-		say "file_url:".($file_url//"none");
-		say encode 'utf-8',"file_name:".($file_name//"none");
-		say $web_url;
-		exit 1;
-	    }
-	    #download files
-	    unless(defined $show){
-		system('wget','-c','--user-agent='.UA,$file_url,'-O',$file_name);
-		exit $? if $?;
-		sleep 1;
-	    } else {
-		say encode 'utf-8',"$file_name\:\:\:$file_url";
-	    }
+    my $web_content=get_content($ua,$web_url);
+    for(split /\n/,$web_content){
+	my ($file_name,$file_url)=split /:::/;
+	unless(defined $show){
+	    system('wget','-c','-U',UA,$file_url,'-O',$file_name);
+	    exit $? if $?;
+	    sleep 1;
+	} else {
+	    say encode 'utf-8',"$file_name\:\:\:$file_url";
 	}
     }
 }
+
 
 __END__
 
@@ -124,12 +92,9 @@ __END__
 
 =head1 SYNOPSIS
 
-115_down [-l|--login username(email address,passwd] [-f|--file  file] [-s] [-h|--help] [-V|--version] [url]
+115_down [-f|--file  file] [-s] [-h|--help] [-V|--version] [url]
 
 =head1 OPTIONS
-
-=item B<-l,--login>
-login in to get some resource that need logined.
 
 =item B<-f, --file>
 specify the files to read urls.Multiple files can be given,separated by commas.use '-' to read from stdin.
