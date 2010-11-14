@@ -7,7 +7,15 @@ use warnings;
 use WWW::Mechanize;
 use Encode;
 use utf8;
-use Data::Dumper;
+use Log::Log4perl qw(:easy);
+
+Log::Log4perl->easy_init(
+			 {
+			  level => $DEBUG,
+			  file => '>> /home/cfy/115_log'
+			  }
+			);
+
 
 print "Content-type:text/html\n\n";
 
@@ -45,36 +53,33 @@ sub get_content{
     }
 }
 
-my @web_urls=split '_',$ENV{QUERY_STRING};
+DEBUG join " ",my @web_urls=split '_',$ENV{QUERY_STRING};
 
 for my $web_url (@web_urls) {
     #get real download urls
     my $web_content=get_content($mech,$web_url);
     unless($web_content=~m'115down@gmail.com'){
-	say STDERR 'relogin...';
+	DEBUG 'relogin...';
 	&login('115_down','fn4=IplVhkmwtqvjh7dy',$mech);
 	$web_content=get_content($mech,$web_url);
     }
     my ($file_name,$file_url);
     given($web_content){
-	when(/(\Q网络繁忙时段，非登陆用户其它下载地址暂时关闭。\E)/){
-	    say encode 'utf-8',$1;
-	    next;
+	when(m{\Qerror_message">\E([^<]+)\Q</span>\E}){
+	    my $msg=encode 'utf-8',$1;
+	    say $msg;
+	    DEBUG $msg;
 	}
-	when(/(\Q提取码不存在或已过期。\E)/||/(\Q很抱歉，文件不存在。\E)/){
-	    say encode 'utf-8',$1;
-	    next;
-	}
+	default{
+	        $web_content=~/^var file_name = '(.+)';/m && ($file_name = $1);
+		$web_content=~m{(http://(?:\d+?\.)?bak\.[^"]+)} && ($file_url=$1);
+		#show the download url
+		$file_name//='none';
+		$file_url//='none';
+		my $msg=encode 'utf-8',"$file_name\:\:\:$file_url";
+		say $msg;
+		DEBUG $msg;
+	    }
     }
-    $web_content=~/^var file_name = '(.+)';/m && ($file_name = $1);
-    $web_content=~m{(http://(?:\d+?\.)?bak\.[^"]+)} && ($file_url=$1);
-    unless($file_name && $file_url){
-	say "file_url:".($file_url//"none");
-	say encode 'utf-8',"file_name:".($file_name//"none");
-    	say $web_url;
-    	exit 1;
-    }
-    #show the download url
-    say encode 'utf-8',"$file_name\:\:\:$file_url";
     sleep 1;
 }
