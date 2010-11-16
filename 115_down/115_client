@@ -10,6 +10,8 @@ use Pod::Usage;
 use LWP::UserAgent;
 use Encode;
 use utf8;
+use MIME::Base64 qw(encode_base64);
+
 
 use constant UA => 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60';
 use constant VERSION => 1.0;
@@ -24,7 +26,7 @@ sub get_content{
     my $url=shift;
     my $response = $ua->get('http://iperl.co.cc/115.pl?'.$url);
     if ($response->is_success) {
-	return $response->decoded_content;
+	return decode 'utf-8',$response->content;
     }
     else{
 	warn "get_content error:".$response->status_line;
@@ -38,6 +40,7 @@ GetOptions(
 	   'help|h' => \ my $help,
 	   'version|V'=>\ my $version,
 	  );
+
 if(defined $version){
     say 'version:'.VERSION;
     exit 0;
@@ -73,7 +76,6 @@ for my $web_url (@web_urls) {
     my $web_content=get_content($ua,$web_url);
     for(split /\n/,$web_content){
 	my ($file_name,$file_url)=split /:::/;
-	$file_name=encode 'utf-8',$file_name;
 	unless(defined $show){
 	    system('wget','-c','-U',UA,$file_url,'-O',$file_name);
 	    exit $? if $?;

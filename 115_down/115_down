@@ -104,7 +104,6 @@ for my $web_url (@web_urls) {
 		say $web_url;
 		exit 1;
 	    }
-	    $file_name=encode 'utf-8',$file_name;
 	    #download files
 	    unless(defined $show){
 		system('wget','-c','-U',UA,$file_url,'-O',$file_name);
