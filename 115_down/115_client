@@ -73,6 +73,7 @@ for my $web_url (@web_urls) {
     my $web_content=get_content($ua,$web_url);
     for(split /\n/,$web_content){
 	my ($file_name,$file_url)=split /:::/;
+	$file_name=encode 'utf-8',$file_name;
 	unless(defined $show){
 	    system('wget','-c','-U',UA,$file_url,'-O',$file_name);
 	    exit $? if $?;
