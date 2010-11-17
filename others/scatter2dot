@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+#This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+#written by Fengyuan Chen.
+use strict;
+use warnings;
+use YAML;
+
+my %t;
+while(<>){
+    /:(.+)$/;
+    my $p=\%t;
+    for(split /\//,$1){
+	$p->{$_}={} unless defined $p->{$_};
+	$p=$p->{$_};
+    }
+    $p->{C}++;
+}
+# sub count{
+#     my $h=shift;
+#     for(keys %$h){
+# 	unless(exists $h->{$_}{C}){
+# 	    &count($h->{$_});
+# 	}
+#     }
+#     $h->{C}=keys %$h;
+#     my $a=$i++;
+#     print "$a -- ".++$i
+# }
+# my $i;
+
+# for(keys %t){
+#     &count($t{$_});
+# }
+sub output{
+    my $p=shift;
+    my $h=shift;
+    if(exists $h->{C}){
+	print "$p [label=\"$h->{C}\"];\n";
+    }
+    else{
+	for(sort keys %$h){
+	    print "$p -- $p$_;\n";
+	    print "$p$_ [label=\"$_\"];\n";
+	    &output($p.$_,$h->{$_});
+	}
+    }
+}
+# print Dump \%t;
+# exit;
+print "graph foo {\nnode [peripheries=2 style=\"filled,rounded\" fontname=\"Vera Sans YuanTi Mono\"];\nrankdir=LR;\n";
+&output('root',\%t);
+print "}";

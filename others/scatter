@@ -4,11 +4,15 @@
 use 5.012;
 use warnings;
 use File::Copy;
+use Getopt::Long;
+GetOptions(
+	   'check|c' => \ my $check
+	  );
 
-my $base=shift;
-$base=~s{(?<=[^/])$}{/};
-chdir $base;
-my @files=glob "*";
+# my $base=shift;
+# $base=~s{(?<=[^/])$}{/};
+# chdir $base;
+my @files=@ARGV;
 open my $index,'>','index';
 sub scatter{
     my $pre=shift;
@@ -21,17 +25,20 @@ sub scatter{
     my $dir=shift;
     my @f=@_;
     my $i='00';
+    my $n=10**int(log(@f-1)/log(10));
     while(@f>10){
-	mkdir $dir.$pre.$i;
-	scatter($pre,$dir.$pre.$i.'/',splice @f,0,10**int(log(@f-1)/log(10)));
+	mkdir $dir.$pre.$i unless defined $check;
+	scatter($pre,$dir.$pre.$i.'/',splice @f,0,$n);
 	$i++;
     }
     if(@f>0){
-	if($i>0){
-	    mkdir $dir.=$pre.$i.'/';
+	if($i ne '00'){
+	    # mkdir $dir.=$pre.$i.'/';
+	    $dir.=$pre.$i.'/';
+	    mkdir $dir unless defined $check;
 	}
 	for(@f){
-	    move($_,$dir);
+	    move($_,$dir) unless defined $check;
 	    say $index map {s{./}{};$_} "$_:$dir";
 	}
     }
