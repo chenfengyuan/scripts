@@ -91,9 +91,8 @@ for my $web_url (@web_urls) {
     my $web_content=get_content($mech,$web_url);
     my ($file_name,$file_url);
     given($web_content){
-	when(m{\Qerror_message">\E([^<]+)\Q</span>\E}){
+	when(m{\Qpickcode_error">\E([^<]+)\Q</div>\E}){
 	    say encode 'utf-8',$1;
-	    next;
 	}
  	default{
 	    $web_content=~m{\Q<div class="fl"><i class="file-type"></i>\E([^<]+)\Q</div>\E} && ($file_name = $1);
