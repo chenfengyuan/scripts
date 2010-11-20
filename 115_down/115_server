@@ -3,7 +3,8 @@
 #written by Fengyuan Chen.
 #cfy1990 at gmail dot com
 
-use 5.012;
+use 5.010;
+use stirct;
 use warnings;
 use WWW::Mechanize;
 use Encode;

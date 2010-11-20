@@ -5,6 +5,7 @@
 #usage:weather_email [zone] data-file
 #email_address url in data-file
 use 5.010;
+use strict;
 use warnings;
 use WWW::Mechanize;
 use Encode;
