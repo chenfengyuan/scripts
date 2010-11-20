@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+#chenfengyuan
+#This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+#cfy1990 at gmail dot com
+
+use warnings;
+use strict;
+use 5.010;
+use POSIX;
+use Getopt::Long;
+use File::Basename;
+
+my ($mplayer,$lame);
+my $path="/dev/shm/ape2flac$$";
+
+$SIG{'INT'} =sub {
+    kill 9,$mplayer,$lame;
+    unlink $path;
+    exit 2;
+};
+
+my $me=basename $0;
+my $version="1.0";
+GetOptions('help|h'=>\ my $help,
+	   'dry-run|n'=> \ my $dry_run,
+	  );
+if($help||@ARGV<1){
+    say "Version: $version";
+    say "Usuage: $me [OPTION] FILE...";
+    say "Use mplayer and lame to convert ape to flac";
+    say "--help                   display this help and exit";
+    say "Report bugs to jeova.sanctus.unus!gmail.com";
+    exit 1;
+}
+unless (mkfifo($path,0644)) {
+    say STDERR "can't mkfifo:$path";
+    exit 1;
+}
+my $i;
+for my $old_file (@ARGV){
+    next unless( -f $old_file && (-s _ > 0));
+    (my $new_file=$old_file) =~s/(?:\.([^.]+))?$/.mp3/;
+    say ++$i.'/'.@ARGV;
+    if(defined $dry_run){
+	say "[$old_file][$new_file]";
+    }
+    else{
+	&convert($old_file,$new_file);
+    }
+}
+
+sub convert{
+    say "$_[0]->$_[1]";
+    # system("mplayer '$_[0]' -ao 'pcm:file=$path' -vo null 2>&1 > /dev/null   &");
+    given($mplayer=fork){
+	when(! defined $_){
+	    die 'cannot fork';
+	}
+	when($_ == 0){
+	    exec('mplayer','-really-quiet',$_[0],'-ao',"pcm:file=$path",'-vo','null');
+	}
+    }
+    given($lame=fork){
+	when(! defined $_){
+	    die 'cannot fork';
+	}
+	when($_ == 0){
+	    exec('lame',$path,$_[1]);
+	}
+    }
+    waitpid $lame,"WIFEXITED";
+    waitpid $mplayer,"WIFEXITED";
+}
+
+unlink $path;
