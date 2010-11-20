@@ -4,7 +4,7 @@
 #cfy1990 at gmail dot com
 
 use 5.010;
-use stirct;
+use strict;
 use warnings;
 use WWW::Mechanize;
 use Encode;
