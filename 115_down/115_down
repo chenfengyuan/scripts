@@ -105,7 +105,7 @@ for my $web_url (@web_urls) {
 	    }
 	    #download files
 	    unless(defined $show){
-		system('wget','-c','-U',UA,$file_url,'-O',$file_name);
+		system('wget','-c','-U',UA,$file_url,'--timeout=10','-O',$file_name);
 		exit $? if $?;
 		sleep 1;
 	    } else {

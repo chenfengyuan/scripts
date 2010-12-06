@@ -77,7 +77,8 @@ for my $web_url (@web_urls) {
     for(split /\n/,$web_content){
 	my ($file_name,$file_url)=split /:::/;
 	unless(defined $show){
-	    system('wget','-c','-U',UA,$file_url,'-O',$file_name);
+	    # system('wget','-c','-U',UA,$file_url,'-O',$file_name);
+	    system('wget','-c','-U',UA,$file_url,'--timeout=10','-O',$file_name);
 	    exit $? if $?;
 	    sleep 1;
 	} else {
