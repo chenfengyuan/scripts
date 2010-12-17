@@ -11,23 +11,34 @@ use WWW::Mechanize;
 use Encode;
 use Mail::Sender;
 use utf8;
+use Getopt::Long;
+use Config::Simple;
+
+my $config_file='weather.data';
+my $zone=0;
+GetOptions(
+	   "f=s"    => \$config_file,
+	   "z"      => \$zone,
+	  );
+my $config = Config::Simple->import_from($config_file, \my %Config);
 my $sender = new Mail::Sender({
-			       smtp => '127.0.0.1',
-			       from => 'weather@gmail.com',
+			       smtp => 'smtp.163.com',
+			       from => $Config{'account.from_mail'},
+			       auth => 'LOGIN',      #LOGIN, PLAIN, CRAM-MD5 and NTLM
+			       authid => $Config{'account.authid'},
+			       authpwd => $Config{'account.authpwd'},
 			      });
 my $mech=new WWW::Mechanize agent=> 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.63';
-my $zone=@ARGV>1?shift:0;
+
 say 'reading file....';
 my %urls;
 
-while(<>){
-    next if /^#/;
-    say join " ",my ($to,$url)=split;
-    unless(exists $urls{$url}){
-	say "getting $url";
-	$mech->get($url);
-	$urls{$url}=$mech->text();
-    }
+for(grep !/^account/,$config->get_block()){
+    my $to=$Config{$_.'.email'};
+    my $url=$Config{$_.'.url'};
+    say "getting $url";
+    $mech->get($url);
+    $urls{$url}=$mech->text();
     my $msg=$urls{$url};
     $msg=~s/首页.*$//;
     $msg=~s/.+?天气预报//;
