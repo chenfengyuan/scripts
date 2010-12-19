@@ -11,7 +11,7 @@ use Getopt::Long;
 use File::Basename;
 
 my ($mplayer,$lame);
-my $path="/dev/shm/ape2flac$$";
+my $path="/dev/shm/any2mp3$$";
 
 $SIG{'INT'} =sub {
     kill 9,$mplayer,$lame;
@@ -27,8 +27,9 @@ GetOptions('help|h'=>\ my $help,
 if($help||@ARGV<1){
     say "Version: $version";
     say "Usuage: $me [OPTION] FILE...";
-    say "Use mplayer and lame to convert ape to flac";
+    say "Use mplayer and lame to convert any to mp3";
     say "--help                   display this help and exit";
+    say "--dry-run|-n             perform a trial run with no changes made";
     say "Report bugs to jeova.sanctus.unus!gmail.com";
     exit 1;
 }
@@ -65,11 +66,10 @@ sub convert{
 	    die 'cannot fork';
 	}
 	when($_ == 0){
-	    exec('lame',$path,$_[1]);
+	    exec('lame','-b320','-V0',$path,$_[1]);
 	}
     }
-    waitpid $lame,"WIFEXITED";
-    waitpid $mplayer,"WIFEXITED";
+    waitpid $mplayer,0;
+    waitpid $lame,0;
 }
-
 unlink $path;
