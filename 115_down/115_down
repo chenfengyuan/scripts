@@ -15,6 +15,7 @@ use utf8;
 use constant UA => 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60';
 use constant VERSION => 1.1;
 
+
 my $mech=WWW::Mechanize->new(agent=>UA);
 
 sub login{
@@ -105,6 +106,7 @@ for my $web_url (@web_urls) {
 	    }
 	    #download files
 	    unless(defined $show){
+		print encode 'utf-8',"\e]2;115_down-$file_name\a";
 		system('wget','-c','-U',UA,$file_url,'--timeout=10','-O',$file_name);
 		exit $? if $?;
 		sleep 1;

@@ -1,0 +1,300 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use File::Basename qw/dirname basename/;
+use 5.012;
+use YAML;
+use File::Path qw/remove_tree/;
+use Pod::Usage;
+
+#use Config::General qw/ParseConfig/;
+
+local $SIG{INT}=sub{
+    print "\e]2;$ENV{SHELL}\a";
+    exit 0;
+};
+my %Config_switch;
+GetOptions(
+	   'profile|p=s' => \$Config_switch{profile},
+	   'remove|r!' =>\$Config_switch{remove},
+	   'auto|a!' =>\  $Config_switch{auto},
+	   'debug|d!' => \ $Config_switch{debug},
+	   'no-init-file|n' => \ my $no_init,
+	   'individual-compress|i!' =>\ $Config_switch{'individual-compress'},
+	   'output|o' =>\ my $output,
+	   'help|h' =>\ my $help,
+	  );
+my %Config=(
+	    profile  => 'ipod',
+	    remove   => '0',
+	    debug    => '0',
+	    auto     => '1',
+	    'individual-compress' => '0',
+	   );
+unless($no_init){
+    my %Config_file=ParseConfig("$ENV{HOME}/.".basename $0);
+    $Config{$_}=$Config_file{$_} for keys %Config_file;
+}
+$Config{$_}=$Config_switch{$_} for grep defined($Config_switch{$_}),keys %Config_switch;
+$Config{auto}=1 if $Config{'individual-compress'};
+
+pod2usage(-verbose => 2) if $help;
+die 'not enough paramters' if  @ARGV < 1;
+$Config{auto}=$Config{'individual-compress'}=0
+    if $output;
+die 'no output file' unless $output || $Config{auto};
+
+my @args=@ARGV;
+
+if($Config{'individual-compress'}){
+    &call_program($_) for @args;
+}
+else{
+    &call_program(@args);
+}
+
+if ($Config{remove}) {
+    # my @dirs=keys %{{map { (-d $_?$_:dirname($_)),undef } @args}};
+    for(@args){
+	given($_){
+	    when(-d){
+		print "rm -r  $_\n";
+	    }
+	    when(-f _){
+		print "rm $_\n";
+	    }
+	}
+    }
+    unless($Config{debug}){
+	print "if you don't want remove\npress Ctrl-c\n";
+	my $time=time+5;
+	while ($time - time>= 0) {
+	    print $time-time," ";
+	    sleep 1;
+	}
+	print "\n";
+	for(@args){
+	    given($_){
+		when(-d){
+		    remove_tree $_;
+		}
+		when(-f _){
+		    unlink $_;
+		}
+	    }
+	}
+    }
+}
+
+
+
+#==========================================
+#exit
+print "\e]2;$ENV{SHELL}\a";
+exit 0;
+
+#========================================
+#functions
+#my parse init file function
+sub ParseConfig{
+    my $init_file=shift;
+    my %init;
+    open my $in,'<',$init_file;
+    while(<$in>){
+	next if /^#/;
+	s/^\s+//g;
+	my ($key,$value)=split / |=/,$_,2;
+	$init{$key}=chomp($value);
+    }
+    %init;
+}
+#call mencoder to compress
+sub call_program{
+    my $program='mencoder';
+    my $output_file;
+    if ($Config{auto}) {
+	if ( -d $_[0]) {
+	    $output_file=$_[0];
+	} else {
+	    $output_file=dirname($_[0]) eq '.'?'foo':dirname $_[0];
+	}
+	my $suffix;
+	given($Config{profile}){
+	    when('ipod'){
+		$suffix='mp4';
+	    }
+	    when(/mpeg4/){
+		$suffix='avi';
+	    }
+	    default{
+		$suffix='avi';
+	    }
+	}
+	$output_file.=".$suffix";
+    } else {
+	$output_file=shift;
+    }
+    my @options=('-profile',$Config{profile},'-o',$output_file);
+    my @args;
+    for (@_) {
+	given($_){
+	    when(-d){
+		my $some_dir=$_;
+		opendir(my $dh, $some_dir) || die "can't opendir $some_dir: $!";
+		push @args,map "$some_dir/$_",sort grep   { ! /^\./ && -f "$some_dir/$_" } readdir($dh);
+	    }
+	    when(-f){
+		push @args,$_;
+	    }
+	}
+    }
+    if ($Config{debug}) {
+	print Dump \%Config;
+	print STDERR "\nprogramm call:\n[$program]\t[".(join ":",@options)."]\t[".(join ":",@args)."]\n";
+	return;
+    }
+
+
+    print "\e]2;".basename($0)."\a";
+
+    my $i=0;
+    my $i_old=$i;
+    my $number=@args;
+    my $time_old=time;
+    my $pid = open(KID_TO_READ, "-|");
+    local $/="\r";
+    local $|=1;
+    if ($pid) {			# parent
+	while (<KID_TO_READ>) {
+	    # do something interesting
+	    /Movie-Aspect/ && $i++;
+	    if ($i ne $i_old) {
+		/(Pos[^]]++])/ && print $i==1?"":(time-$time_old)."\n","[$i/$number]";
+		print "\e]2;$i/$number\a";
+		$i_old=$i;
+		$time_old=time;
+	    }
+	}
+	close(KID_TO_READ) || warn "kid exited $?";
+    } else {		# child
+	#	($EUID, $EGID) = ($UID, $GID); # suid only
+	open STDERR,'>','/dev/null';
+	exec($program, @options, @args)
+	    || die "can't exec program: $!";
+	# NOTREACHED
+    }
+}
+
+__END__
+
+=head1 NAME
+
+compress-video - compress divide videos
+
+=head1 SYNOPSIS
+
+B<compress-video>
+[B<--profile|-p> I<profile>]
+[B<--remove|-r>]
+[B<--auto|-a>]
+[B<--debug|-d>]
+[B<--no-init-file|-n>]
+[B<--individual-compress|-i>]
+[B<--output|-o> I<output-file>]
+F<files|directories>
+
+=head1 DESCRIPTION
+
+compress-video will compress some video using mencoder.It is a perl script to aid user to compress vivide videos which may be  downloaded from some web site.Using this script is easy,if you want to see some examples,please see EXAMPLES.
+plesase pay a attention:
+if you use --output|-o then the --auto|-a and --individual-compress|-i will be auto disable.
+if you use --individual-compress|-i,the --auto|-a will be auto enable.
+the order of the options dosen't matter.
+
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--profile|-p> I<profile>
+
+Use the I<profile> as the profile file of mencoder.This profiles might be defined in ~/.mplayer/mencoder.
+
+=item B<--remove|-r>
+
+remove files and directories.Will only remove the files or directories have been as argument.For example,if you use foo/*.flv as argument.After removing the files,even the directories is empty,this dircetories will not be removed.
+
+=item B<--auto|-a>
+
+will auto determined the output file name.if the --output|-o is given,this opitions will be auto disabled.
+The suffix of output file is choosed by the profile.
+
+=item B<--debug|-d>
+
+Show some debug infomation,and do nothing.
+
+=item B<--no-init-file|-n>
+
+Do not read init file.
+
+=item B<--individual-compress|-i>
+
+One argument one outfile.
+
+=item B<--output|-o> I<output-file>
+
+Use the file as output file.
+
+=item B<-help>
+
+Print a help message and exits.
+
+=back
+
+=head1 EXAMPLES
+
+$compress-video dir/ #simplest example,the output file is dir.mp4.
+
+$compress-video  -o foo.mp4 dir/#use the output file instead of auto determining.
+
+$compress-video dir1/ dir2/ #compress multiple directories and output single file.the output file is dir1.mp4.
+
+$compress-video -i dir1/ dir/2 #compress directories or files individual.The output file is dir1.mp4 and dir2.mp4.
+
+$compress-video -r dir1/ #compress and remove dir1 recursively.
+
+$cat ~/.compress_video
+remove=1
+auto=1
+#inti file example
+
+=head1 SEE ALSO
+
+mencoder(1) and perl(1)
+
+=head1 DIAGNOSTICS
+
+the priority of the opitions
+the command line opitions
+the init file
+the default value
+
+defalut value:
+
+profile  => 'ipod',
+
+remove   => '0',
+
+debug    => '0',
+
+auto     => '1',
+
+'individual-compress' => '0',
+
+=head1 AUTHOR
+
+Fengyuan Chen <cfy1990 gmail.com>
+
+=cut

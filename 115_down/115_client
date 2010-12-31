@@ -77,6 +77,7 @@ for my $web_url (@web_urls) {
     for(split /\n/,$web_content){
 	my ($file_name,$file_url)=split /:::/;
 	unless(defined $show){
+	    print encode 'utf-8',"\e]2;115_client-$file_name\a";
 	    # system('wget','-c','-U',UA,$file_url,'-O',$file_name);
 	    system('wget','-c','-U',UA,$file_url,'--timeout=10','-O',$file_name);
 	    exit $? if $?;
