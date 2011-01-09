@@ -52,7 +52,7 @@ if($Config{'individual-compress'}){
     &call_program($_) for @args;
 }
 else{
-    &call_program($output,@args);
+    &call_program(@args);
 }
 
 if ($Config{remove}) {
@@ -134,7 +134,7 @@ sub call_program{
 	}
 	$output_file.=".$suffix";
     } else {
-	$output_file=shift;
+	$output_file=$output;
     }
     my @options=('-profile',$Config{profile},'-o',$output_file);
     my @args;
