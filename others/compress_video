@@ -23,7 +23,7 @@ GetOptions(
 	   'debug|d!' => \ $Config_switch{debug},
 	   'no-init-file|n' => \ my $no_init,
 	   'individual-compress|i!' =>\ $Config_switch{'individual-compress'},
-	   'output|o' =>\ my $output,
+	   'output|o=s' =>\ my $output,
 	   'help|h' =>\ my $help,
 	  );
 my %Config=(
@@ -52,7 +52,7 @@ if($Config{'individual-compress'}){
     &call_program($_) for @args;
 }
 else{
-    &call_program(@args);
+    &call_program($output,@args);
 }
 
 if ($Config{remove}) {
