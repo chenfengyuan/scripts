@@ -132,7 +132,7 @@ sub call_program{
 		$suffix='avi';
 	    }
 	}
-	$output_file.=".$suffix";
+	$output_file=basename "$output_file.$suffix";
     } else {
 	$output_file=$output;
     }

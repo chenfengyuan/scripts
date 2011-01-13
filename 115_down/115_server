@@ -73,7 +73,8 @@ for my $web_url (@web_urls) {
 	    DEBUG $msg;
 	}
 	default{
-	    $web_content=~m{\Q<div class="fl"><i class="file-type"></i>\E([^<]+)\Q</div>\E} && ($file_name = $1);
+	    $web_content=~m{\Q<title>\E([^|]++)\E} && ($file_name=$1);
+	    # $web_content=~m{\Q<div class="fl"><i class="file-type"></i>\E([^<]+)\Q</div>\E} && ($file_name = $1);
 	    $web_content=~m{(http://(?:\d+?\.)?bak\.[^"]+)} && ($file_url=$1);
 	    #show the download url
 	    $file_name//='none';
