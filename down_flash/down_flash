@@ -42,7 +42,7 @@ if ($mech->success()) {
     foreach (@link) {
 	my $add=$_->url();
 	say encode('utf-8',$size."下载 => $add");
-	print encode 'utf-8',"\e]2;down_flash-$filename/$size\a";
+	print encode 'utf-8',"\e]2;down_flash-".($filename+1)."/$size\a";
 	`wget -nc --user-agent='Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60' '$add' -O '$filename.flv'`;
 	++$filename;
     }
