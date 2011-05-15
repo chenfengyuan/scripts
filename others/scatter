@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 #This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 #written by Fengyuan Chen.
-use 5.012;
+use 5.010;
+use strict;
 use warnings;
 use File::Copy;
 use Getopt::Long;
