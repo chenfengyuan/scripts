@@ -14,6 +14,7 @@ $_=$ARGV[0];
 s/^http:\/([a-z])/http:\/\/$1/;
 chomp; s/\//%2F/g; s/:/%3A/g;
 $_="http://www.flvcd.com/parse.php?flag=&format=high&kw=$_&sbt=%BF%AA%CA%BCGO%21";
+# $_="http://www.flvcd.com/parse.php?flag=&format=super&kw=$_&sbt=%BF%AA%CA%BCGO%21";
 chdir "$ENV{HOME}/movie";
 #my $bus = Net::DBus->session->get_service('org.freedesktop.Notifications')->get_object('/org/freedesktop/Notifications','org.freedesktop.Notifications');
 my $mech = WWW::Mechanize->new(agent=> 'Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60');
@@ -25,7 +26,8 @@ if ($mech->success()) {
     # m{\Q<strong>当前解析视频：</strong>\E\s+(\S+)\s+\Q<strong>\E}s;
     # /当前解析视频.*/; $_=$&; s/^.*?strong>//; s/<strong.*//;
     # #print $_."==================\n";
-    say encode 'utf-8',"\e[31m\e[1m".$1."\e[0m==================\n";
+    my $title_utf8=encode 'utf-8',"\e[31m\e[1m".$1."\e[0m==================\n";
+    say $title_utf8;
     # s;/;;g;
     # s/\s//g;
     my $dir=$1//'foo';
@@ -41,7 +43,8 @@ if ($mech->success()) {
     my $filename='0' x (log($size)/log(10)+1) ;
     foreach (@link) {
 	my $add=$_->url();
-	say encode('utf-8',$size."下载 => $add");
+	# say encode('utf-8',$size."下载 => $add\n");
+	say $title_utf8;
 	print encode 'utf-8',"\e]2;down_flash-".($filename.""+1)."/$size\a";
 	`wget -nc --user-agent='Opera/9.80 (X11; Linux i686; U; en) Presto/2.6.30 Version/10.60' '$add' -O '$filename.flv'`;
 	++$filename;
