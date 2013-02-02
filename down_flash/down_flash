@@ -13,7 +13,7 @@ use Encode;
 $_=$ARGV[0];
 s/^http:\/([a-z])/http:\/\/$1/;
 chomp; s/\//%2F/g; s/:/%3A/g;
-$_="http://www.flvcd.com/parse.php?flag=&format=high&kw=$_&sbt=%BF%AA%CA%BCGO%21";
+$_="http://www.flvcd.com/parse.php?flag=&format=super&kw=$_&sbt=%BF%AA%CA%BCGO%21";
 # $_="http://www.flvcd.com/parse.php?flag=&format=super&kw=$_&sbt=%BF%AA%CA%BCGO%21";
 chdir "$ENV{HOME}/movie";
 #my $bus = Net::DBus->session->get_service('org.freedesktop.Notifications')->get_object('/org/freedesktop/Notifications','org.freedesktop.Notifications');
