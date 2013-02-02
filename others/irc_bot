@@ -1,0 +1,122 @@
+#!/usr/bin/perl
+#This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+#written by Fengyuan Chen.
+#jeova.sanctus.unus <at> gmail.com
+
+use strict;
+use warnings;
+use Carp;
+use Net::IRC;
+use Data::Dumper;
+use Getopt::Long qw (:config no_ignore_case);
+
+GetOptions(
+	   'server|s=s' => \ my $bot_server,
+	   'nick|n=s' => \ my $bot_nick,
+	   'password|p=s' => \ my $bot_password,
+	   'channel|c=s' => \ my $bot_channel,
+	   'help|h' => \ my $help,
+	   'version|V'=>\ my $version,
+	   'verbose|v' => \ my $verbose,
+	  );
+my $irc = new Net::IRC;
+my @names;
+
+$bot_server//='irc.freenode.net';
+$bot_nick//='iabcde';
+$bot_channel//='#freenode-newyears';
+print "[$bot_channel]\n";
+
+&verbose("Creating connection to IRC server...");
+
+my $conn = $irc->newconn(Server   => ($bot_server  //  'irc.freenode.net'),
+			 Port     => 6667,
+			 Nick     => ($bot_nick // 'ibot1990'),
+			 Ircname  => 'Net::IRC.',
+			 Username => 'perl',
+			 verbose  => 1,
+			)
+    or croak "irctest: Can't connect to IRC server.";
+
+
+# What to do when the bot successfully connects.
+sub on_connect {
+	my $self = shift;
+	&verbose("Joining");
+	# $self->join("#ubuntu-cn");
+	# $self->join("#gentoo-cn");
+	$self->join($bot_channel);
+}
+# Handles some messages you get when you connect
+sub on_init {
+    my ($self, $event) = @_;
+    my (@args) = ($event->args);
+    shift (@args);
+    &verbose("*** @args");
+}
+
+sub blah {
+  my ($self, $event) = @_;
+  &verbose("Got event of type: " . $event->type);
+  &verbose(Dumper \$event);
+}
+
+sub on_public{
+    my ($self,$event)=@_;
+    # &verbose(Dumper \$event);
+    # &verbose(Dumper [$self->whois($event->nick)]);
+}
+
+sub on_join{
+    my ($self,$event) = @_;
+    my @to = $event->to;
+    &verbose('#'.scalar @names);
+    # $self->privmsg([ @to ],scalar @names);
+    @names=();
+    $self->names($bot_channel);
+
+}
+
+sub on_names {
+    my ($self, $event) = @_;
+    # &verbose(Dumper \$event);
+    push @names,split /\s/,$event->{args}[3];
+    if(${[ split /\s/,$event->{args}[3]]}[-1] eq '@ChanServ'){
+	&verbose(scalar @names);
+	&verbose("\e]2;".@names."\a");
+	@names=();
+    }
+    # &verbose('##########################################');
+    # &verbose(Dumper $self->names($bot_channel));
+}
+
+sub verbose{
+    for(0..$#_){
+	chomp(my $msg=shift);
+	print STDERR $msg,"\n" if defined $verbose;
+    }
+}
+
+&verbose("Installing handler routines...");
+$conn->add_handler('whoisuser',\&on_names);
+$conn->add_global_handler([ 251,252,253,254,302,255 ], \&on_init);
+$conn->add_global_handler(376, \&on_connect);
+$conn->add_handler('public', \&on_public);
+$conn->add_global_handler(353, \&on_names);
+#$conn->add_handler('join',   \&on_join);
+#$conn->add_default_handler(\&blah);
+
+&verbose("configure done.");
+&verbose ("starting...");
+
+local $SIG{ALRM} = sub {
+    &verbose('alarm');
+    $conn->names($bot_channel);
+    alarm 10;
+    # for(1..10){
+    # 	 $conn->privmsg('#ibot1990', $_);
+    # 	 sleep 1;
+};
+alarm 30;
+$irc->start;
+
