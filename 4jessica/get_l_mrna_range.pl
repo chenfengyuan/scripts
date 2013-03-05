@@ -81,7 +81,7 @@ sub print_get_l_mrna_range{
   say $out join ",",@intron_len;
 }
 if(@ARGV<3){
-  say "$0 : dna-file l_mrna_file output_file";
+  say "$0 : dna_file l_mrna_file output_file";
   exit(1);
 }
 my $dna_file=shift;
