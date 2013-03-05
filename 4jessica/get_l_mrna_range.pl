@@ -37,7 +37,7 @@ sub get_l_mrna_range{
   my @intron_len;
   # 得到每个intron的长度
   for (my ($i,$len)=(0,scalar @dna_range);$i<$len - 1;$i++) {
-    push @intron_len,($dna_range[$i+1]->[0]-$dna_range[$i]->[1]);
+    push @intron_len,($dna_range[$i+1]->[0] - $dna_range[$i]->[1] - 1);
   }
   # reverse，这样从后面开始处理
   my @dna_range_reverse=reverse @dna_range;
