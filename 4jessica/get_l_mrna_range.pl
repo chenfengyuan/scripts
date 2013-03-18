@@ -16,15 +16,6 @@ sub get_content{
     return $_;
 }
 
-# 一个参数:dna文件名
-# 返回一个数组，每个元素也是一个数组，内容是dna exon的一段的开始也结束
-sub get_dna_exon_range{
-    my $dna_file=shift;
-    my $dna_exon_content=&get_content($dna_file);
-    my @dna_range=map {[ split /\.\./,$_ ]} split ",",$dna_exon_content;
-    return @dna_range;
-}
-
 # 第一个参数:dna文件名
 # 第二个参数:l_mrna文件名
 # 返回一个数组，每个元素是a..b的一个字符串
