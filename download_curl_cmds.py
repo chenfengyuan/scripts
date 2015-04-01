@@ -45,8 +45,11 @@ def main():
             raw_filename = tmp[0]
             filename = encode_filename(tmp[0])
             size = tmp[1]
-            downloaded_size = os.path.getsize(raw_filename)
-            if os.path.exists(raw_filename) and size <= downloaded_size:
+            if os.path.exists(raw_filename):
+                downloaded_size = os.path.getsize(raw_filename)
+            else:
+                downloaded_size = 0
+            if size <= downloaded_size:
                 print u'%s %s %s is already downloaded' % (size, downloaded_size, raw_filename)
                 continue
             subprocess.call(u"echo downloading '%s'" % filename, shell=True)
