@@ -52,8 +52,8 @@ def main():
             if size <= downloaded_size:
                 print u'%s %s %s is already downloaded' % (size, downloaded_size, raw_filename)
                 continue
-            subprocess.call(u"echo downloading '%s'" % filename, shell=True)
-            cmd = u"%s -C - -L -o '%s'" % (curl_prefix, filename)
+            subprocess.call(u"echo downloading %s" % filename, shell=True)
+            cmd = u"%s -C - -L -o %s" % (curl_prefix, filename)
             for i in xrange(10):
                 rv = subprocess.call(cmd, shell=True)
                 if rv != 0:
